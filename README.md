@@ -30,26 +30,6 @@ Berikut adalah beberapa tangkapan layar (screenshot) untuk melihat bagaimana apl
 
 ---
 
-## 🚀 Instalasi dan Penggunaan (Sesuaikan)
-
-Berikan langkah-langkah detail bagaimana pengguna dapat menginstal dan menjalankan aplikasi Anda.
-
-1.  **Kloning Repositori:**
-    ```bash
-    git clone [https://m.youtube.com/shorts/0yaU9711U80](https://m.youtube.com/shorts/0yaU9711U80)
-    ```
-
-2.  **Persyaratan:**
-    Pastikan Anda sudah menginstal [Sebutkan Prasyarat, contoh: Java 11/Node.js/Python] di sistem Anda.
-
-3.  **Menjalankan Aplikasi:**
-    ```bash
-    cd nama-direktori-aplikasi
-    [Perintah untuk menjalankan aplikasi, contoh: java -jar nama-aplikasi.jar atau npm start]
-    ```
-
----
-
 ## 🤝 Kontribusi
 
 Kami sangat menghargai kontribusi dari komunitas! Jika Anda ingin berkontribusi, silakan:
