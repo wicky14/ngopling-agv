@@ -33,7 +33,7 @@ Berikut adalah beberapa tangkapan layar (screenshot) untuk melihat bagaimana apl
 
 ## ✨ Cara Pakai 
 
-klik link dibawah ini :
+klik link ini :
 [Link Text](https://wicky14.github.io/ngopling-agv/)
 
 
