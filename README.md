@@ -3,12 +3,13 @@
 ## 📝 Deskripsi Proyek
 
 Aplikasi *Open Source* **Spin Nama** ini dirancang khusus untuk membantu masyarakat dalam melakukan pengacakan (spin) nama yang akan dipilih secara adil dan transparan.
+Dalam hal ini sih, lagi dipake warga ya hahahah
 
 Proyek ini bersifat *open source* dan **bebas digunakan oleh siapa saja** tanpa batasan.
 
 ---
 
-## ✨ Fitur Unggulan (Sesuaikan)
+## ✨ Fitur Unggulan
 
 Sertakan poin-poin fitur utama aplikasi Anda di sini.
 
