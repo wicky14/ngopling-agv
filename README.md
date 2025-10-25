@@ -13,7 +13,7 @@ Proyek ini bersifat *open source* dan **bebas digunakan oleh siapa saja** tanpa 
 
 Sertakan poin-poin fitur utama aplikasi Anda di sini.
 
-* Mekanisme acak nama yang terjamin keadilannya.
+* Mekanisme acak nama.
 * Antarmuka pengguna (User Interface) yang intuitif dan mudah digunakan.
 * Dukungan untuk mengelola daftar nama dalam jumlah besar.
 
