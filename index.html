@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roda Nama Berputar Terjamin 7 Detik</title>
+    <style>
+        /* --- CSS Global: No Scroll dan Font --- */
+        html, body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            /* Mencegah scrolling pada halaman utama */
+            overflow: hidden; 
+            background-color: #f4f4f9;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding-top: 60px; /* Offset untuk top-bar */
+        }
+
+        /* --- Bilah Atas --- */
+        .top-bar {
+            width: 100%;
+            background-color: #007bff;
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 20;
+            /* Tambahkan cursor pointer agar user tahu ini interaktif */
+            cursor: pointer; 
+            transition: background-color 0.1s;
+        }
+
+        .top-bar:active {
+            background-color: #0056b3; /* Efek visual saat ditekan */
+        }
+
+        .top-bar h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        /* --- Main Card & Konten Tab --- */
+        .main-card {
+            max-width: 600px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            flex-grow: 1; 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-content {
+            display: none;
+            background-color: #ffffff;
+            padding: 20px;
+            border-top: 1px solid #ccc;
+            /* Disesuaikan: 100vh - top-bar(60) - fixedSpinArea(~55) - bottom-bar(~55) = ~170px */
+            min-height: calc(100vh - 170px); 
+            overflow-y: auto; /* Memungkinkan scrolling hanya di dalam konten tab */
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Konten Utama (Roda) --- */
+        .utama-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            position: relative;
+        }
+
+        #wheelCanvas {
+            border: 5px solid #333;
+            border-radius: 50%;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        /* Penunjuk Bawah */
+        #wheelPointerBottom {
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 30px solid #dc3545; /* Warna merah/bahaya */
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            /* Sesuaikan posisi vertikal agar menunjuk tepat di bawah roda */
+            top: 410px; 
+            z-index: 10;
+        }
+        
+        /* --- Fixed Spin Area (Baru) --- */
+        #fixedSpinArea {
+            position: fixed;
+            /* Dihitung: bottom-bar padding+height sekitar 55px */
+            bottom: 55px; 
+            left: 0;
+            width: 100%;
+            background-color: #ffffff; /* Latar belakang putih */
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 25; /* Harus lebih tinggi dari bottom-bar */
+            
+            /* Menggunakan flex untuk centering dan kontrol display */
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            padding: 10px 0; /* Padding vertikal */
+        }
+        
+        .spin-controls {
+            display: flex; 
+            gap: 10px;
+            width: 100%; 
+            justify-content: center; 
+        }
+
+        #spinButton {
+            padding: 12px 24px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: white;
+            background-color: #28a745;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px #1e7e34;
+        }
+
+        #spinButton:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px #1e7e34;
+        }
+
+        #spinButton:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #result {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #dc3545;
+            margin-top: 15px;
+            text-align: center;
+            /* Tambahkan margin di mobile agar tidak terpotong oleh fixedSpinArea */
+            margin-bottom: 70px; 
+        }
+
+        /* --- Konten Menu (Pengaturan) --- */
+        .menu-controls {
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+            width: 98%;
+            box-sizing: border-box;
+        }
+        
+        .select-control {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        #namesInput {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            margin-bottom: 10px;
+            resize: vertical;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        #saveNamesButton {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #saveNamesButton:hover {
+            background-color: #0056b3;
+        }
+        
+        /* Kelas untuk menyembunyikan fitur "Pilih Pemenang Otomatis" */
+        .hidden-feature {
+            display: none;
+        }
+
+        /* --- Bilah Menu Bawah --- */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #343a40;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+
+        .tab-menu {
+            display: flex;
+            justify-content: center;
+        }
+
+        .tab-button {
+            background-color: transparent;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .tab-button:hover, .tab-button.active {
+            background-color: #007bff;
+        }
+        
+        /* --- Modal Pengaman Kata Sandi (Custom) --- */
+        #passwordModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Awalnya tersembunyi */
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 300px;
+        }
+        .modal-content input {
+            padding: 10px;
+            margin: 10px 0;
+            width: calc(100% - 20px);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Bilah Atas -->
+    <div class="top-bar">
+        <h1>Spin ngopling AGV</h1>
+    </div>
+
+    <!-- Modal Kata Sandi -->
+    <div id="passwordModal">
+        <div class="modal-content">
+            <h3 style="margin-top: 0;">Akses Rahasia</h3>
+            <p>Masukkan kata sandi untuk membuka fitur tersembunyi:</p>
+            <input type="password" id="passwordInput" placeholder="Kata Sandi">
+            <button id="submitPassword">Masuk</button>
+            <button id="cancelPassword">Batal</button>
+            <p id="passwordError" style="color: red; display: none; margin-top: 10px;">Kata sandi salah.</p>
+        </div>
+    </div>
+
+    <!-- Kontainer Utama (Card) -->
+    <div class="main-card">
+        <div id="utama" class="tab-content active">
+            <div class="utama-content" id="wheelContainer">
+                
+                <canvas id="wheelCanvas" width="400" height="400"></canvas>
+                
+                <div id="wheelPointerBottom"></div> 
+
+                <div id="result">Ketuk roda atau klik PUTAR!</div>
+            </div>
+        </div>
+
+        <div id="menu" class="tab-content">
+            <h2 id="menuHeading">Pengaturan Roda Nama</h2>
+            
+            <!-- FITUR TERSEMBUNYI SECARA DEFAULT -->
+            <div class="menu-controls hidden-feature" id="autoSelectControl">
+                <h3>Pilih Pemenang Otomatis (Hanya Sesi Ini)</h3>
+                <div class="select-control">
+                    <label for="targetNameSelect">Berhenti pada Nama:</label>
+                    <select id="targetNameSelect">
+                        <option value="">(Acak)</option>
+                    </select>
+                </div>
+                <p style="font-size: 0.9em; color: #666;">Pilih nama di atas, lalu tekan PUTAR di tab Utama untuk berhenti secara paksa pada nama tersebut (Durasi: ~7 detik).</p>
+            </div>
+
+            <div class="menu-controls">
+                <h3>Kelola Daftar Nama</h3>
+                <p>Masukkan satu nama per baris:</p>
+                <textarea id="namesInput" placeholder="Masukkan nama di sini (contoh: Amir, Budi, Citra)"></textarea>
+                <button id="saveNamesButton">Simpan Daftar</button>
+                <p style="margin-top: 10px; font-size: 0.9em;">Daftar nama disimpan secara lokal di peramban Anda.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Area Tetap untuk Tombol Putar, tepat di atas bar navigasi bawah -->
+    <div id="fixedSpinArea">
+        <div class="spin-controls">
+            <button id="spinButton">PUTAR!</button>
+        </div>
+    </div>
+
+    <div class="bottom-bar">
+        <div class="tab-menu">
+            <button class="tab-button active" onclick="openTab('utama', this)">🏠 Utama</button>
+            <button class="tab-button" onclick="openTab('menu', this)">⚙️ Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Konfigurasi & Variabel Global ---
+
+        const PASSKEY = "anakanjing"; // Kata Sandi Rahasia
+        const LONG_PRESS_THRESHOLD_MS = 2000;
+        let pressTimer;
+        
+        // --- VARIBEL SESI BARU: Menggantikan Local Storage untuk status kunci ---
+        let isUnlockedInSession = false; 
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const spinButton = document.getElementById('spinButton');
+        const namesInput = document.getElementById('namesInput');
+        const saveNamesButton = document.getElementById('saveNamesButton');
+        const targetNameSelect = document.getElementById('targetNameSelect');
+        const resultDisplay = document.getElementById('result');
+        const autoSelectControl = document.getElementById('autoSelectControl');
+        const fixedSpinArea = document.getElementById('fixedSpinArea'); 
+        const topBar = document.querySelector('.top-bar'); // Elemen baru
+        
+        // Modal elements
+        const passwordModal = document.getElementById('passwordModal');
+        const passwordInput = document.getElementById('passwordInput');
+        const submitPasswordButton = document.getElementById('submitPassword');
+        const cancelPasswordButton = document.getElementById('cancelPassword');
+        const passwordError = document.getElementById('passwordError');
+        
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = centerX - 10;
+        let names = [];
+        let rotation = 0;
+        let speed = 0;
+        const MAX_SPEED_INITIAL = 25; 
+        const MIN_SPEED = 0.05;
+        let spinning = false;
+        let animationFrameId;
+        
+        let startTime = 0;
+        const MAX_SPIN_TIME_MS = 10000; 
+        const TOTAL_FORCED_SPIN_DURATION_MS = 7000; 
+        
+        let initialRotation = 0;
+        let totalAngleToSpin = 0; 
+        const DECELERATION_RATE_RANDOM = 0.985; 
+
+        const colors = [
+            '#FF6347', '#4682B4', '#3CB371', '#FFD700',
+            '#9370DB', '#F08080', '#20B2AA', '#FFA07A'
+        ];
+
+        // --- Utility Functions ---
+        
+        function easeOutQuad(t) {
+            return t * (2 - t);
+        }
+        
+        // Cek status kunci fitur dari variabel sesi
+        function isFeatureUnlocked() {
+            return isUnlockedInSession;
+        }
+
+        // Tampilkan/Sembunyikan fitur berdasarkan status sesi
+        function updateFeatureVisibility() {
+            if (isFeatureUnlocked()) {
+                // Hapus kelas tersembunyi agar terlihat
+                autoSelectControl.classList.remove('hidden-feature');
+            } else {
+                // Tambahkan kelas tersembunyi
+                autoSelectControl.classList.add('hidden-feature');
+            }
+        }
+
+        // --- Data & Drawing Functions ---
+
+        function loadNames() {
+            // Penyimpanan nama masih menggunakan Local Storage
+            const savedNames = localStorage.getItem('wheelNames');
+            if (savedNames) {
+                names = savedNames.split('\n').map(name => name.trim()).filter(name => name.length > 0);
+                namesInput.value = savedNames;
+            } else {
+                // Nama default jika tidak ada yang disimpan
+                names = ['Satu', 'Dua', 'Tiga', 'Empat'];
+                namesInput.value = names.join('\n');
+            }
+            drawWheel(); 
+        }
+
+        function saveNames() {
+            const inputNames = namesInput.value.trim();
+            if (inputNames) {
+                // Simpan daftar nama yang diperbarui ke Local Storage
+                localStorage.setItem('wheelNames', inputNames);
+                // Perbarui array names in-memory
+                names = inputNames.split('\n').map(name => name.trim()).filter(name => name.length > 0);
+                
+                // Custom alert replacement for simple notification
+                resultDisplay.textContent = 'Daftar nama berhasil disimpan dan diperbarui!';
+                setTimeout(() => resultDisplay.textContent = 'Ketuk roda atau klik PUTAR!', 3000);
+            } else {
+                localStorage.removeItem('wheelNames');
+                names = [];
+                resultDisplay.textContent = 'Daftar dikosongkan!';
+                setTimeout(() => resultDisplay.textContent = 'Ketuk roda atau klik PUTAR!', 3000);
+            }
+            // Gambar ulang roda dengan nama baru
+            drawWheel();
+            // Perbarui daftar drop-down untuk pemilihan target
+            populateTargetSelect();
+        }
+
+        function populateTargetSelect() {
+            targetNameSelect.innerHTML = '<option value="">(Acak)</option>';
+            names.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                targetNameSelect.appendChild(option);
+            });
+        }
+
+        function drawWheel() {
+            const numSegments = names.length;
+            if (numSegments === 0) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // Gambar lingkaran abu-abu kosong jika tidak ada nama
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#ddd';
+                ctx.fill();
+                resultDisplay.textContent = "Tambahkan nama di tab Menu.";
+                return;
+            }
+
+            const arcSize = 2 * Math.PI / numSegments;
+            rotation = rotation % 360; 
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < numSegments; i++) {
+                const startAngle = (i * arcSize) + (rotation * Math.PI / 180);
+                const endAngle = ((i + 1) * arcSize) + (rotation * Math.PI / 180);
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fill();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + arcSize / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillText(names[i], radius - 10, 0);
+                ctx.restore();
+            }
+
+            // Lingkaran Tengah
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        function calculateTargetAngle(targetName) {
+            const numSegments = names.length;
+            if (numSegments === 0) return 0;
+            const targetIndex = names.indexOf(targetName);
+            if (targetIndex === -1) return null;
+
+            const segmentAngle = 360 / numSegments;
+            const targetCenterAngle = targetIndex * segmentAngle + segmentAngle / 2;
+            
+            // finalRotation: Sudut rotasi agar targetCenterAngle menunjuk ke 90 derajat (penunjuk di bawah)
+            const finalRotation = (360 - targetCenterAngle + 90) % 360; 
+            return finalRotation;
+        }
+
+        function getWinner(finalRotation) {
+            const numSegments = names.length;
+            if (numSegments === 0) return "Tidak Ada Nama";
+            const segmentAngle = 360 / numSegments;
+
+            const normalizedRotation = (finalRotation % 360 + 360) % 360;
+            
+            // Penunjuk di 90 derajat (Jam 6).
+            const effectiveRotation = (normalizedRotation + 270) % 360; 
+
+            const segmentIndex = Math.floor(effectiveRotation / segmentAngle);
+
+            // Menghitung nama berdasarkan segmen yang ditunjuk
+            return names[(numSegments - 1) - segmentIndex];
+        }
+
+
+        // --- Loop Animasi Utama ---
+
+        function animate(timestamp) {
+            if (!spinning) return;
+            
+            const elapsedTime = timestamp - startTime;
+            // Gunakan isUnlockedInSession
+            const isForcedSpin = targetNameSelect.value !== "" && isUnlockedInSession;
+
+            if (isForcedSpin) {
+                // Mode Terkendali Waktu (Guaranteed Stop)
+                const t = Math.min(1, elapsedTime / TOTAL_FORCED_SPIN_DURATION_MS);
+                
+                if (t >= 1) {
+                    rotation = initialRotation + totalAngleToSpin;
+                    spinning = false;
+                    drawWheel();
+                    handleStop(rotation);
+                    return;
+                }
+                
+                const easedT = easeOutQuad(t); 
+                rotation = initialRotation + (totalAngleToSpin * easedT);
+
+            } else {
+                // Mode Acak (Deceleration Rate)
+                
+                if (elapsedTime > MAX_SPIN_TIME_MS) {
+                    speed = Math.max(speed * DECELERATION_RATE_RANDOM, MIN_SPEED); 
+                } else {
+                    speed *= 0.999; 
+                }
+
+                if (speed <= MIN_SPEED && elapsedTime > 500) {
+                    spinning = false;
+                    drawWheel();
+                    handleStop(rotation);
+                    return;
+                }
+                
+                rotation += speed;
+                rotation %= 360;
+            }
+
+            drawWheel();
+            animationFrameId = requestAnimationFrame(animate);
+        }
+        
+        function handleStop(finalRotationValue) {
+            cancelAnimationFrame(animationFrameId);
+            spinButton.disabled = false;
+            canvas.style.cursor = 'pointer';
+            spinButton.textContent = 'PUTAR!';
+            
+            const finalWinner = getWinner(finalRotationValue % 360); 
+            resultDisplay.textContent = `Terpilih: ${finalWinner}! 🏆`;
+        }
+
+        function startSpin() {
+            if (names.length === 0) {
+                resultDisplay.textContent = "Silakan masukkan nama di tab Menu terlebih dahulu!";
+                return;
+            }
+            if (spinning) return;
+
+            spinButton.disabled = true;
+            canvas.style.cursor = 'not-allowed';
+            
+            // Gunakan isUnlockedInSession
+            const isForcedSpin = targetNameSelect.value !== "" && isUnlockedInSession;
+            
+            speed = MAX_SPEED_INITIAL / 2 + (Math.random() * (MAX_SPEED_INITIAL / 2)); 
+            spinning = true;
+            startTime = performance.now();
+            
+            initialRotation = (rotation % 360 + 360) % 360; 
+
+            if (isForcedSpin) {
+                const targetAngle = calculateTargetAngle(targetNameSelect.value);
+                const extraSpins = 10; 
+                const finalStopRotation = (extraSpins * 360) + targetAngle;
+                totalAngleToSpin = finalStopRotation - initialRotation;
+            } else {
+                totalAngleToSpin = 0; 
+            }
+            
+            // Pesan konsisten untuk kedua mode (Acak atau Terpaksa)
+            resultDisplay.textContent = `Berputar...`; 
+            
+            animate(startTime);
+        }
+
+        // --- Event Listener dan Inisialisasi ---
+
+        spinButton.addEventListener('click', startSpin);
+        canvas.addEventListener('click', startSpin);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startSpin();
+        });
+
+        // 1. Tombol Simpan Daftar HANYA menangani penyimpanan data
+        saveNamesButton.addEventListener('click', saveNames);
+
+        // 2. Long Press Timer dipindahkan ke Top Bar
+        topBar.addEventListener('mousedown', startPressTimer);
+        topBar.addEventListener('touchstart', startPressTimer);
+        topBar.addEventListener('mouseup', handleSaveOrCancelPress);
+        topBar.addEventListener('touchend', handleSaveOrCancelPress);
+        topBar.addEventListener('mouseleave', handleSaveOrCancelPress);
+        
+        function startPressTimer(e) {
+            // Hanya jalankan logika long press jika target adalah topBar
+            if (e.currentTarget === topBar) {
+                if (e.type === 'touchstart') {
+                    e.preventDefault();
+                }
+                
+                // Clear timer yang ada
+                clearTimeout(pressTimer); 
+                
+                // Mulai timer long press
+                pressTimer = setTimeout(() => {
+                    // Tampilkan modal kata sandi jika belum terbuka
+                    if (!isFeatureUnlocked()) {
+                        showPasswordModal();
+                    } 
+                    pressTimer = null; // Setel ulang timer setelah aksi dipicu
+                }, LONG_PRESS_THRESHOLD_MS);
+            }
+        }
+
+        function handleSaveOrCancelPress() {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        }
+        
+        // --- Logika Modal Kata Sandi ---
+        
+        function showPasswordModal() {
+            passwordModal.style.display = 'flex';
+            passwordInput.value = '';
+            passwordError.style.display = 'none';
+            passwordInput.focus();
+        }
+        
+        function hidePasswordModal() {
+            passwordModal.style.display = 'none';
+        }
+        
+        submitPasswordButton.addEventListener('click', checkPassword);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+        
+        cancelPasswordButton.addEventListener('click', hidePasswordModal);
+
+        function checkPassword() {
+            if (passwordInput.value === PASSKEY) {
+                // Set status ke variabel sesi, bukan Local Storage
+                isUnlockedInSession = true; 
+                updateFeatureVisibility();
+                hidePasswordModal();
+                passwordInput.value = '';
+                // Custom alert replacement
+                resultDisplay.textContent = 'Fitur otomatis berhasil diaktifkan untuk sesi ini!';
+                setTimeout(() => resultDisplay.textContent = 'Ketuk roda atau klik PUTAR!', 3000);
+            } else {
+                passwordError.style.display = 'block';
+            }
+        }
+
+
+        /** Menangani fungsi tab & SCROLL. */
+        window.openTab = function(tabId, buttonElement) {
+            const tabcontent = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove('active');
+            }
+
+            const tabbuttons = document.getElementsByClassName("tab-button");
+            for (let i = 0; i < tabbuttons.length; i++) {
+                tabbuttons[i].classList.remove('active');
+            }
+
+            const activeTab = document.getElementById(tabId);
+            activeTab.classList.add('active');
+            buttonElement.classList.add('active');
+            
+            // Tampilkan/Sembunyikan tombol PUTAR! berdasarkan tab
+            if (tabId === 'utama') {
+                fixedSpinArea.style.display = 'flex';
+            } else {
+                fixedSpinArea.style.display = 'none';
+            }
+
+            if (tabId === 'menu') {
+                loadNames(); 
+                populateTargetSelect();
+                // Selalu perbarui visibilitas saat tab Menu dibuka
+                updateFeatureVisibility(); 
+            } 
+        }
+
+        // Pengaturan awal: Pastikan data dimuat saat halaman pertama kali dimuat
+        window.onload = () => {
+             loadNames();
+             populateTargetSelect();
+             // Karena isUnlockedInSession defaultnya false, fitur akan tersembunyi
+             updateFeatureVisibility(); 
+             
+             // Pastikan tombol PUTAR! terlihat saat pertama kali memuat (default tab 'utama')
+             fixedSpinArea.style.display = 'flex';
+        };
+
+    </script>
+</body>
+</html>
