@@ -61,4 +61,4 @@ Kami sangat menghargai kontribusi dari komunitas! Jika Anda ingin berkontribusi,
 
 ## 📜 Lisensi
 
-Proyek ini dilisensikan di bawah [Sebutkan Jenis Lisensi, contoh: Lisensi MIT].
+Proyek ini dilisensikan di bawah [Lisensi MIT].
