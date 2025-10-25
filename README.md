@@ -31,6 +31,15 @@ Berikut adalah beberapa tangkapan layar (screenshot) untuk melihat bagaimana apl
 
 ---
 
+## ✨ Cara Pakai 
+
+klik link dibawah ini :
+[Link Text](https://wicky14.github.io/ngopling-agv/)
+
+
+---
+
+
 ## 🤝 Kontribusi
 
 Kami sangat menghargai kontribusi dari komunitas! Jika Anda ingin berkontribusi, silakan:
